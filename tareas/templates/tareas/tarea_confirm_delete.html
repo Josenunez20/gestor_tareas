@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Eliminar Tarea | Gestor de Tareas{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center fade-in">
+    <div class="col-md-5">
+        <div class="glass-card text-center">
+            <i class="fas fa-exclamation-triangle" style="font-size: 4rem; color: var(--danger-color);"></i>
+            
+            <h2 class="my-4" style="color: var(--dark-color);">¿Eliminar tarea?</h2>
+            
+            <p class="mb-4">
+                ¿Estás seguro de que quieres eliminar la tarea:
+                <strong>"{{ object.descripcion }}"</strong>?
+            </p>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="d-flex gap-2 justify-content-center">
+                    <button type="submit" class="btn btn-danger-modern btn-modern">
+                        <i class="fas fa-trash-alt me-2"></i>Sí, eliminar
+                    </button>
+                    <a href="{% url 'tareas:tarea_list' %}" class="btn btn-secondary btn-modern">
+                        <i class="fas fa-arrow-left me-2"></i>Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}Mis Tareas | Gestor de Tareas{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <h1 class="modern-title">
+        <i class="fas fa-tasks me-3"></i>Mis Tareas
+    </h1>
+
+    <!-- Formulario para nueva tarea -->
+    <div class="glass-card">
+        <h3 class="mb-4" style="color: var(--dark-color);">
+            <i class="fas fa-plus-circle me-2" style="color: var(--primary-color);"></i>
+            Nueva Tarea
+        </h3>
+        <form action="{% url 'tareas:tarea_create' %}" method="post">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <input type="text" 
+                           name="descripcion" 
+                           class="modern-input" 
+                           placeholder="¿Qué necesitas hacer?"
+                           required>
+                </div>
+                <div class="col-md-4">
+                    <input type="date" 
+                           name="fecha_vencimiento" 
+                           class="modern-input"
+                           placeholder="Fecha límite">
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary-modern btn-modern w-100" type="submit">
+                        <i class="fas fa-plus me-2"></i>Agregar
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Lista de tareas -->
+    <div class="glass-card">
+        <h3 class="mb-4" style="color: var(--dark-color);">
+            <i class="fas fa-list me-2" style="color: var(--primary-color);"></i>
+            Lista de Tareas
+        </h3>
+
+        {% if tareas %}
+            <div class="modern-table">
+                <table class="table table-borderless mb-0">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-tag me-2"></i>Descripción</th>
+                            <th><i class="fas fa-calendar me-2"></i>Fecha límite</th>
+                            <th><i class="fas fa-circle me-2"></i>Estado</th>
+                            <th><i class="fas fa-cog me-2"></i>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tarea in tareas %}
+                            <tr class="{% if tarea.esta_vencida %}table-danger{% endif %}">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if tarea.completada %}
+                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                            <span style="text-decoration: line-through;">{{ tarea.descripcion }}</span>
+                                        {% else %}
+                                            <i class="fas fa-clock text-warning me-2"></i>
+                                            {{ tarea.descripcion }}
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if tarea.fecha_vencimiento %}
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-calendar-alt me-2 text-muted"></i>
+                                            {{ tarea.fecha_vencimiento|date:"d/m/Y" }}
+                                            {% if tarea.esta_vencida %}
+                                                <span class="badge-modern badge-vencida ms-2">
+                                                    <i class="fas fa-exclamation-triangle me-1"></i>Vencida
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted">
+                                            <i class="fas fa-minus me-2"></i>Sin fecha
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if tarea.completada %}
+                                        <span class="badge-modern badge-completada">
+                                            <i class="fas fa-check me-1"></i>Completada
+                                        </span>
+                                    {% else %}
+                                        <span class="badge-modern badge-pendiente">
+                                            <i class="fas fa-clock me-1"></i>Pendiente
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-2">
+                                        <!-- Botón completar/pendiente -->
+                                        <form action="{% url 'tareas:marcar_completada' tarea.pk %}" method="post" style="display: inline;">
+                                            {% csrf_token %}
+                                            <button type="submit" 
+                                                    class="btn btn-modern {% if tarea.completada %}btn-secondary-modern{% else %}btn-success-modern{% endif %}"
+                                                    title="{% if tarea.completada %}Marcar como pendiente{% else %}Marcar como completada{% endif %}">
+                                                {% if tarea.completada %}
+                                                    <i class="fas fa-undo-alt"></i>
+                                                {% else %}
+                                                    <i class="fas fa-check"></i>
+                                                {% endif %}
+                                            </button>
+                                        </form>
+                                        
+                                        <!-- Botón editar -->
+                                        <a href="{% url 'tareas:tarea_update' tarea.pk %}" 
+                                           class="btn btn-modern btn-primary-modern"
+                                           title="Editar tarea">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        
+                                        <!-- Botón eliminar -->
+                                        <a href="{% url 'tareas:tarea_delete' tarea.pk %}" 
+                                           class="btn btn-modern btn-danger-modern"
+                                           title="Eliminar tarea">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-clipboard-list" style="font-size: 4rem; color: var(--gray-color); opacity: 0.5;"></i>
+                <h4 class="mt-3" style="color: var(--gray-color);">No hay tareas</h4>
+                <p style="color: var(--gray-color);">¡Comienza agregando una nueva tarea!</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
