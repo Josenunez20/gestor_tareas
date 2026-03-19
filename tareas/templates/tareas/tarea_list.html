@@ -3,6 +3,31 @@
 {% block title %}Mis Tareas | Gestor de Tareas{% endblock %}
 
 {% block content %}
+<style>
+    /* Estilos para tareas bloqueadas */
+    .tarea-bloqueada {
+        opacity: 0.7;
+        background-color: #f8f9fa;
+    }
+    
+    .btn-disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+    
+    .tooltip-icon {
+        cursor: help;
+        border-bottom: 1px dotted #6c757d;
+    }
+    
+    .mensaje-bloqueo {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+</style>
+
 <div class="fade-in">
     <h1 class="modern-title">
         <i class="fas fa-tasks me-3"></i>Mis Tareas
@@ -59,7 +84,13 @@
                     </thead>
                     <tbody>
                         {% for tarea in tareas %}
-                            <tr class="{% if tarea.esta_vencida %}table-danger{% endif %}">
+                            <!-- Determinamos si la tarea está bloqueada -->
+                            {% if tarea.completada or tarea.esta_vencida %}
+                                <tr class="tarea-bloqueada">
+                            {% else %}
+                                <tr {% if tarea.esta_vencida %}class="table-danger"{% endif %}>
+                            {% endif %}
+                            
                                 <td>
                                     <div class="d-flex align-items-center">
                                         {% if tarea.completada %}
@@ -69,6 +100,13 @@
                                             <i class="fas fa-clock text-warning me-2"></i>
                                             {{ tarea.descripcion }}
                                         {% endif %}
+                                        
+                                        <!-- Indicador de bloqueo -->
+                                        {% if tarea.completada or tarea.esta_vencida %}
+                                            <span class="ms-2 tooltip-icon" title="{% if tarea.completada %}Tarea completada{% else %}Tarea vencida{% endif %} - No se puede modificar">
+                                                <i class="fas fa-lock text-muted"></i>
+                                            </span>
+                                        {% endif %}
                                     </div>
                                 </td>
                                 <td>
@@ -77,9 +115,7 @@
                                             <i class="fas fa-calendar-alt me-2 text-muted"></i>
                                             {{ tarea.fecha_vencimiento|date:"d/m/Y" }}
                                             {% if tarea.esta_vencida %}
-                                                <span class="badge-modern badge-vencida ms-2">
-                                                    <i class="fas fa-exclamation-triangle me-1"></i>Vencida
-                                                </span>
+                                                <span class="badge bg-danger ms-2">Vencida</span>
                                             {% endif %}
                                         </div>
                                     {% else %}
@@ -90,45 +126,77 @@
                                 </td>
                                 <td>
                                     {% if tarea.completada %}
-                                        <span class="badge-modern badge-completada">
-                                            <i class="fas fa-check me-1"></i>Completada
-                                        </span>
+                                        <span class="badge bg-success">Completada</span>
+                                    {% elif tarea.esta_vencida %}
+                                        <span class="badge bg-danger">Vencida</span>
                                     {% else %}
-                                        <span class="badge-modern badge-pendiente">
-                                            <i class="fas fa-clock me-1"></i>Pendiente
-                                        </span>
+                                        <span class="badge bg-warning">Pendiente</span>
                                     {% endif %}
                                 </td>
                                 <td>
                                     <div class="d-flex gap-2">
                                         <!-- Botón completar/pendiente -->
-                                        <form action="{% url 'tareas:marcar_completada' tarea.pk %}" method="post" style="display: inline;">
-                                            {% csrf_token %}
-                                            <button type="submit" 
-                                                    class="btn btn-modern {% if tarea.completada %}btn-secondary-modern{% else %}btn-success-modern{% endif %}"
-                                                    title="{% if tarea.completada %}Marcar como pendiente{% else %}Marcar como completada{% endif %}">
+                                        {% if tarea.completada or tarea.esta_vencida %}
+                                            <!-- Deshabilitado si está completada o vencida -->
+                                            <button type="button" 
+                                                    class="btn btn-modern btn-disabled {% if tarea.completada %}btn-secondary-modern{% else %}btn-success-modern{% endif %}"
+                                                    title="{% if tarea.completada %}Completada - No se puede cambiar{% else %}Vencida - No se puede cambiar{% endif %}"
+                                                    disabled>
                                                 {% if tarea.completada %}
                                                     <i class="fas fa-undo-alt"></i>
                                                 {% else %}
                                                     <i class="fas fa-check"></i>
                                                 {% endif %}
                                             </button>
-                                        </form>
+                                        {% else %}
+                                            <!-- Activo solo si está pendiente y no vencida -->
+                                            <form action="{% url 'tareas:marcar_completada' tarea.pk %}" method="post" style="display: inline;">
+                                                {% csrf_token %}
+                                                <button type="submit" 
+                                                        class="btn btn-modern btn-success-modern"
+                                                        title="Marcar como completada">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            </form>
+                                        {% endif %}
                                         
                                         <!-- Botón editar -->
-                                        <a href="{% url 'tareas:tarea_update' tarea.pk %}" 
-                                           class="btn btn-modern btn-primary-modern"
-                                           title="Editar tarea">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
+                                        {% if tarea.completada or tarea.esta_vencida %}
+                                            <!-- Deshabilitado si está completada o vencida -->
+                                            <button type="button" 
+                                                    class="btn btn-modern btn-primary-modern btn-disabled"
+                                                    title="{% if tarea.completada %}Completada - No se puede editar{% else %}Vencida - No se puede editar{% endif %}"
+                                                    disabled>
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        {% else %}
+                                            <!-- Activo solo si está pendiente y no vencida -->
+                                            <a href="{% url 'tareas:tarea_update' tarea.pk %}" 
+                                               class="btn btn-modern btn-primary-modern"
+                                               title="Editar tarea">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        {% endif %}
                                         
-                                        <!-- Botón eliminar -->
+                                        <!-- Botón eliminar - Siempre disponible -->
                                         <a href="{% url 'tareas:tarea_delete' tarea.pk %}" 
                                            class="btn btn-modern btn-danger-modern"
-                                           title="Eliminar tarea">
+                                           title="Eliminar tarea"
+                                           onclick="return confirm('¿Estás seguro de eliminar esta tarea?')">
                                             <i class="fas fa-trash-alt"></i>
                                         </a>
                                     </div>
+                                    
+                                    <!-- Mensaje de bloqueo -->
+                                    {% if tarea.completada %}
+                                        <div class="mensaje-bloqueo">
+                                            <i class="fas fa-info-circle me-1"></i>Completada - Solo se puede eliminar
+                                        </div>
+                                    {% elif tarea.esta_vencida %}
+                                        <div class="mensaje-bloqueo">
+                                            <i class="fas fa-info-circle me-1"></i>Vencida - Solo se puede eliminar
+                                        </div>
+                                    {% endif %}
                                 </td>
                             </tr>
                         {% endfor %}
